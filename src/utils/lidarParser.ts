@@ -40,3 +40,25 @@ export async function loadNuScenesLidar(binUrl: string) {
     
     return new THREE.Points(geometry, material);
 }
+
+// src/utils/getLidarFrames.ts
+
+export function getNuScenesFrames(): string[] {
+  // 1. Scan the folder for all files matching your prefix
+  const modules = import.meta.glob<{ default: string }>(
+    '/src/assets/lidar/n008-2018-08-01-15-16-36-0400__LIDAR_TOP__*.pcd.bin',
+    { eager: true, query: '?url' }
+  );
+
+  // 2. Sort filenames by their timestamp ending to guarantee chronological order
+  const sortedUrls = Object.keys(modules)
+    .sort((pathA, pathB) => {
+      // Extract microsecond timestamp from end of filename "...__1538984239948316.pcd.bin"
+      const timeA = Number(pathA.match(/__(\d+)\.pcd\.bin$/)?.[1] || 0);
+      const timeB = Number(pathB.match(/__(\d+)\.pcd\.bin$/)?.[1] || 0);
+      return timeA - timeB;
+    })
+    .map((key) => modules[key].default);
+
+  return sortedUrls;
+}
